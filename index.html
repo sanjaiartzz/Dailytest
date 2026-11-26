@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCQ to Google Forms Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+    /* Custom thin scrollbar for script and table panes */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased selection:bg-brand-100 selection:text-brand-700">
+  <!-- Toast / Status Banner -->
+  <div id="toastBanner" class="fixed bottom-4 right-4 z-50 max-w-md w-[calc(100%-2rem)] sm:w-auto hidden transition-all duration-200">
+    <div id="toastInner" class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium bg-white border-slate-200 text-slate-800">
+      <span id="toastIcon" class="mt-0.5 shrink-0"></span>
+      <p id="toastMessage" class="leading-snug"></p>
+      <button type="button" id="toastCloseBtn" aria-label="Dismiss notification" class="ml-2 text-slate-400 hover:text-slate-600 rounded-md p-0.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">MCQ to Google Forms Studio</h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Single-Page Flow Default
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 truncate">Parse Excel/CSV MCQs, clone template forms without extra sections, and generate Google Apps Script</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" id="downloadSampleXlsxBtn" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:bg-slate-100 transition shadow-2xs">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+          </svg>
+          <span>Sample .XLSX</span>
+        </button>
+        <button type="button" id="downloadSampleCsvBtn" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:bg-slate-100 transition shadow-2xs">
+          <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+          </svg>
+          <span>Sample .CSV</span>
+        </button>
+        <button type="button" id="openDebugModalBtn" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition shadow-2xs">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>Quick Debug</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Top Summary KPI Strip -->
+    <section aria-label="Summary statistics" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs">
+        <p class="text-xs font-medium text-slate-500">Total Questions</p>
+        <p id="statTotalQuestions" class="mt-1 text-2xl font-bold text-slate-900">0</p>
+        <p id="statSourceFile" class="mt-1 text-[11px] text-slate-400 truncate">No file loaded yet</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs">
+        <p class="text-xs font-medium text-slate-500">Valid Questions</p>
+        <p id="statValidQuestions" class="mt-1 text-2xl font-bold text-emerald-600">0</p>
+        <p class="mt-1 text-[11px] text-slate-400">2+ options &amp; matched answer</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs">
+        <p class="text-xs font-medium text-slate-500">Validation Warnings</p>
+        <p id="statWarningQuestions" class="mt-1 text-2xl font-bold text-amber-600">0</p>
+        <p class="mt-1 text-[11px] text-slate-400">Review highlighted rows below</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs">
+        <p class="text-xs font-medium text-slate-500">Total Quiz Points</p>
+        <p id="statTotalPoints" class="mt-1 text-2xl font-bold text-brand-600">0</p>
+        <p id="statLayoutMode" class="mt-1 text-[11px] text-slate-400">Single continuous page</p>
+      </div>
+    </section>
+
+    <!-- Upload + Form Settings Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Column: File Dropzone & Form Settings (6 cols) -->
+      <div class="lg:col-span-6 space-y-6">
+        <!-- Upload Card -->
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700">1. Upload MCQ Spreadsheet</h2>
+            <button type="button" id="loadDemoDataBtn" class="text-xs font-semibold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+              Load Built-in Demo
+            </button>
+          </div>
+
+          <div id="dropZone" tabindex="0" role="button" aria-label="Upload Excel or CSV file" class="group relative border-2 border-dashed border-slate-300 hover:border-brand-500 focus:border-brand-500 focus:outline-none rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50/60 hover:bg-brand-50/30">
+            <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+            <div class="mx-auto w-11 h-11 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-slate-800">
+              Drag &amp; drop your <span class="text-brand-600">.xlsx</span>, <span class="text-brand-600">.xls</span>, or <span class="text-brand-600">.csv</span> file here
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              or click to browse • Columns supported: <code class="text-slate-700">Question</code>, <code class="text-slate-700">Option A..F</code>, <code class="text-slate-700">Answer</code>, <code class="text-slate-700">Points</code>
+            </p>
+          </div>
+
+          <div id="parseErrorBox" class="hidden mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"></div>
+        </section>
+
+        <!-- Form Settings Card -->
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700">2. Form &amp; Template Settings</h2>
+            <span id="templateSavedBadge" class="hidden text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              Saved in browser
+            </span>
+          </div>
+
+          <div>
+            <label for="formTitleInput" class="block text-xs font-semibold text-slate-700 mb-1">Form Title</label>
+            <input id="formTitleInput" type="text" value="TEST 1" placeholder="e.g., TEST 1 - Cyber Security Quiz" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" />
+          </div>
+
+          <div>
+            <label for="formDescriptionInput" class="block text-xs font-semibold text-slate-700 mb-1">Form Description</label>
+            <textarea id="formDescriptionInput" rows="2" placeholder="Instructions or subject description..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">Cyber Security Assessment — Answer all multiple-choice questions carefully.</textarea>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <label for="templateFormInput" class="block text-xs font-semibold text-slate-700">
+                Master Template Form URL or ID <span class="font-normal text-slate-400">(optional)</span>
+              </label>
+              <button type="button" id="clearTemplateBtn" class="text-[11px] font-medium text-slate-500 hover:text-rose-600">
+                Clear
+              </button>
+            </div>
+            <input id="templateFormInput" type="text" placeholder="Paste Google Form edit/view URL or Form ID..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" />
+            <div class="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+              <span class="text-slate-500">Extracted ID: <code id="extractedTemplateId" class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">None (Creates new form)</code></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label for="defaultPointsInput" class="block text-xs font-semibold text-slate-700 mb-1">Default Points per Question</label>
+              <input id="defaultPointsInput" type="number" min="0" max="100" step="1" value="1" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" />
+            </div>
+
+            <div class="flex flex-col justify-end space-y-2 pb-0.5">
+              <label class="inline-flex items-center gap-2.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+                <input id="quizModeCheckbox" type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                <span>Enable Quiz Mode &amp; Grading</span>
+              </label>
+              <label class="inline-flex items-center gap-2.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+                <input id="requiredQuestionsCheckbox" type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                <span>Make MCQ questions required</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Explicitly UNCHECKED by default so questions remain on one continuous page -->
+          <div class="pt-2 border-t border-slate-100">
+            <label class="inline-flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer select-none">
+              <input id="usePageBreakCheckbox" type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+              <span>
+                <span class="font-semibold text-slate-800">Split into sections (Page Break)</span>
+                <span class="block text-[11px] text-slate-500">
+                  Off by default: keeps template fields and all MCQs on a single continuous page without extra sections.
+                </span>
+              </span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Generated Google Apps Script (6 cols) -->
+      <div class="lg:col-span-6">
+        <section class="bg-slate-900 text-slate-100 rounded-2xl border border-slate-800 shadow-sm overflow-hidden">
+          <div class="px-5 py-3.5 bg-slate-950/70 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-bold tracking-wide text-white">3. Generated Google Apps Script</h2>
+              <p class="text-[11px] text-slate-400">Paste into <code class="text-slate-300">Code.gs</code> at script.google.com and run <code class="text-emerald-400">createQuizForm</code></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" id="copyScriptBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span id="copyScriptLabel">Copy Script</span>
+              </button>
+              <button type="button" id="downloadScriptBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                </svg>
+                <span>Download .gs</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="p-4 max-h-[540px] overflow-auto">
+            <pre id="scriptOutput" class="text-xs leading-relaxed text-emerald-300 whitespace-pre"></pre>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Parsed Questions Table Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700">4. Parsed Questions Preview</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Edit questions, options, answer keys, or points inline before copying the script.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Filter Pills -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-semibold" role="group" aria-label="Filter questions">
+            <button type="button" data-filter="all" class="filter-pill px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-2xs transition">All</button>
+            <button type="button" data-filter="valid" class="filter-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Valid</button>
+            <button type="button" data-filter="warning" class="filter-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Warnings</button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative">
+            <input id="questionSearchInput" type="search" placeholder="Search questions..." class="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs text-slate-800 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none w-48 sm:w-56" />
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z" />
+            </svg>
+          </div>
+
+          <button type="button" id="addQuestionRowBtn" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200 transition">
+            <span>+ Add Row</span>
+          </button>
+          <button type="button" id="clearQuestionsBtn" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition">
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="px-3 py-3 w-12">#</th>
+              <th class="px-3 py-3 min-w-[220px]">Question</th>
+              <th class="px-3 py-3 min-w-[220px]">Options (pipe or comma separated)</th>
+              <th class="px-3 py-3 w-28">Answer</th>
+              <th class="px-3 py-3 w-20">Points</th>
+              <th class="px-3 py-3 min-w-[160px]">Status</th>
+              <th class="px-3 py-3 w-14 text-center">Del</th>
+            </tr>
+          </thead>
+          <tbody id="questionsTableBody" class="divide-y divide-slate-100 bg-white">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Quick Debug / Self-Test Modal -->
+  <div id="debugModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-labelledby="debugModalTitle">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 id="debugModalTitle" class="text-base font-bold text-slate-900">Quick Debug &amp; Self-Test Diagnostics</h3>
+          <p class="text-xs text-slate-500">Runs automated checks on ID extraction, single-page script output, and answer matching.</p>
+        </div>
+        <button type="button" id="closeDebugModalBtn" aria-label="Close modal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="runDiagnosticsBtn" class="px-3.5 py-2 rounded-xl font-semibold bg-brand-600 text-white hover:bg-brand-500 transition">
+            Run Self-Tests
+          </button>
+          <span id="diagnosticsSummaryBadge" class="px-2.5 py-1 rounded-full font-semibold bg-slate-100 text-slate-600">
+            Ready
+          </span>
+        </div>
+
+        <div id="diagnosticsResults" class="space-y-2 font-mono bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-[11px] leading-relaxed">
+          <p class="text-slate-500">Click "Run Self-Tests" to verify URL extraction, default single-page behavior (no page break), and script syntax safety.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_KEY_TEMPLATE = 'mcq_studio_template_form_id_v1';
+
+      const DEMO_QUESTIONS = [
+        {
+          question: 'Which protocol encrypts web traffic between a browser and a server?',
+          options: ['HTTP', 'HTTPS', 'FTP', 'Telnet'],
+          answerRaw: 'B',
+          points: 1
+        },
+        {
+          question: 'What does MFA stand for in identity and access management?',
+          options: ['Multi-Factor Authentication', 'Main Firewall Architecture', 'Managed File Access', 'Master Key Algorithm'],
+          answerRaw: 'A',
+          points: 1
+        },
+        {
+          question: 'Which attack tricks users into revealing credentials via deceptive messages?',
+          options: ['SQL Injection', 'Phishing', 'ARP Spoofing', 'Buffer Overflow'],
+          answerRaw: 'Phishing',
+          points: 2
+        }
+      ];
+
+      // Application state
+      const state = {
+        questions: [],
+        sourceFileName: 'Built-in Demo',
+        filter: 'all',
+        search: ''
+      };
+
+      // Cached DOM references
+      const els = {
+        toastBanner: document.getElementById('toastBanner'),
+        toastInner: document.getElementById('toastInner'),
+        toastIcon: document.getElementById('toastIcon'),
+        toastMessage: document.getElementById('toastMessage'),
+        toastCloseBtn: document.getElementById('toastCloseBtn'),
+        statTotalQuestions: document.getElementById('statTotalQuestions'),
+        statValidQuestions: document.getElementById('statValidQuestions'),
+        statWarningQuestions: document.getElementById('statWarningQuestions'),
+        statTotalPoints: document.getElementById('statTotalPoints'),
+        statSourceFile: document.getElementById('statSourceFile'),
+        statLayoutMode: document.getElementById('statLayoutMode'),
+        dropZone: document.getElementById('dropZone'),
+        fileInput: document.getElementById('fileInput'),
+        parseErrorBox: document.getElementById('parseErrorBox'),
+        loadDemoDataBtn: document.getElementById('loadDemoDataBtn'),
+        downloadSampleXlsxBtn: document.getElementById('downloadSampleXlsxBtn'),
+        downloadSampleCsvBtn: document.getElementById('downloadSampleCsvBtn'),
+        formTitleInput: document.getElementById('formTitleInput'),
+        formDescriptionInput: document.getElementById('formDescriptionInput'),
+        templateFormInput: document.getElementById('templateFormInput'),
+        extractedTemplateId: document.getElementById('extractedTemplateId'),
+        templateSavedBadge: document.getElementById('templateSavedBadge'),
+        clearTemplateBtn: document.getElementById('clearTemplateBtn'),
+        defaultPointsInput: document.getElementById('defaultPointsInput'),
+        quizModeCheckbox: document.getElementById('quizModeCheckbox'),
+        requiredQuestionsCheckbox: document.getElementById('requiredQuestionsCheckbox'),
+        usePageBreakCheckbox: document.getElementById('usePageBreakCheckbox'),
+        scriptOutput: document.getElementById('scriptOutput'),
+        copyScriptBtn: document.getElementById('copyScriptBtn'),
+        copyScriptLabel: document.getElementById('copyScriptLabel'),
+        downloadScriptBtn: document.getElementById('downloadScriptBtn'),
+        questionsTableBody: document.getElementById('questionsTableBody'),
+        questionSearchInput: document.getElementById('questionSearchInput'),
+        addQuestionRowBtn: document.getElementById('addQuestionRowBtn'),
+        clearQuestionsBtn: document.getElementById('clearQuestionsBtn'),
+        openDebugModalBtn: document.getElementById('openDebugModalBtn'),
+        debugModal: document.getElementById('debugModal'),
+        closeDebugModalBtn: document.getElementById('closeDebugModalBtn'),
+        runDiagnosticsBtn: document.getElementById('runDiagnosticsBtn'),
+        diagnosticsSummaryBadge: document.getElementById('diagnosticsSummaryBadge'),
+        diagnosticsResults: document.getElementById('diagnosticsResults')
+      };
+
+      let toastTimer = null;
+
+      /**
+       * Displays a non-blocking toast notification.
+       */
+      function showToast(message, type) {
+        const variant = type || 'info';
+        if (toastTimer) {
+          clearTimeout(toastTimer);
+        }
+        els.toastMessage.textContent = message;
+        els.toastInner.className = 'flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ' + (
+          variant === 'error'
+            ? 'bg-rose-50 border-rose-200 text-rose-800'
+            : variant === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-white border-slate-200 text-slate-800'
+        );
+        els.toastIcon.innerHTML = variant === 'error'
+          ? '<svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/></svg>'
+          : '<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+        els.toastBanner.classList.remove('hidden');
+        toastTimer = setTimeout(function () {
+          els.toastBanner.classList.add('hidden');
+        }, 4200);
+      }
+
+      /**
+       * Extracts a Google Form ID from a full URL or raw ID string.
+       */
+      function extractFormId(rawInput) {
+        if (!rawInput || typeof rawInput !== 'string') {
+          return '';
+        }
+        const trimmed = rawInput.trim();
+        if (!trimmed) {
+          return '';
+        }
+        // Match /forms/d/<ID>/ or /forms/u/0/d/<ID>/
+        const urlMatch = trimmed.match(/\/forms\/(?:u\/\d+\/)?d\/(?:e\/)?([a-zA-Z0-9_-]{15,})/);
+        if (urlMatch && urlMatch[1]) {
+          return urlMatch[1];
+        }
+        // Match standalone ID (avoid full URLs that didn't match path)
+        if (!/^https?:\/\//i.test(trimmed)) {
+          const idMatch = trimmed.match(/^([a-zA-Z0-9_-]{15,})$/);
+          if (idMatch && idMatch[1]) {
+            return idMatch[1];
+          }
+        }
+        return '';
+      }
+
+      /**
+       * Safely loads saved template input from localStorage.
+       */
+      function loadSavedTemplate() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY_TEMPLATE);
+          if (saved && saved.trim()) {
+            els.templateFormInput.value = saved.trim();
+            els.templateSavedBadge.classList.remove('hidden');
+          }
+        } catch (_err) {
+          // Ignore storage access errors in restricted sandboxes
+        }
+      }
+
+      /**
+       * Saves current template input to localStorage.
+       */
+      function persistTemplateInput(val) {
+        try {
+          const trimmed = (val || '').trim();
+          if (trimmed) {
+            localStorage.setItem(STORAGE_KEY_TEMPLATE, trimmed);
+            els.templateSavedBadge.classList.remove('hidden');
+          } else {
+            localStorage.removeItem(STORAGE_KEY_TEMPLATE);
+            els.templateSavedBadge.classList.add('hidden');
+          }
+        } catch (_err) {
+          // Ignore storage access errors
+        }
+      }
+
+      /**
+       * Resolves an answer key (letter like A/B/C/1/2 or exact/case-insensitive option text)
+       * to a 0-based option index, or -1 if unresolved.
+       */
+      function resolveCorrectOptionIndex(answerRaw, options) {
+        if (!Array.isArray(options) || options.length === 0) {
+          return -1;
+        }
+        const cleaned = String(answerRaw == null ? '' : answerRaw).trim();
+        if (!cleaned) {
+          return -1;
+        }
+
+        // 1. Single letter A..Z
+        if (/^[A-Za-z]$/.test(cleaned)) {
+          const letterIdx = cleaned.toUpperCase().charCodeAt(0) - 65;
+          if (letterIdx >= 0 && letterIdx < options.length) {
+            return letterIdx;
+          }
+        }
+
+        // 2. Prefix like "A)" or "A." or "Option A"
+        const optPrefixMatch = cleaned.match(/^(?:option\s*)?([A-Za-z])(?:[).:\-\s]|$)/i);
+        if (optPrefixMatch && optPrefixMatch[1]) {
+          const idx = optPrefixMatch[1].toUpperCase().charCodeAt(0) - 65;
+          if (idx >= 0 && idx < options.length && cleaned.length <= 10) {
+            return idx;
+          }
+        }
+
+        // 3. Exact or case-insensitive match with option text
+        const lowerTarget = cleaned.toLowerCase();
+        for (let i = 0; i < options.length; i++) {
+          if (String(options[i]).trim().toLowerCase() === lowerTarget) {
+            return i;
+          }
+        }
+
+        return -1;
+      }
+
+      /**
+       * Validates a single question item and returns { isValid, warnings, correctIndex, normalizedPoints }.
+       */
+      function validateQuestion(item, defaultPoints) {
+        const warnings = [];
+        const qText = String(item.question || '').trim();
+        const opts = Array.isArray(item.options)
+          ? item.options.map(function (o) { return String(o || '').trim(); }).filter(Boolean)
+          : [];
+
+        if (!qText) {
+          warnings.push('Missing question text');
+        }
+        if (opts.length < 2) {
+          warnings.push('Needs at least 2 options');
+        }
+
+        const correctIndex = resolveCorrectOptionIndex(item.answerRaw, opts);
+        if (correctIndex < 0) {
+          warnings.push('Answer does not match an option');
+        }
+
+        const parsedPts = Number(item.points);
+        const fallbackPts = Number.isFinite(Number(defaultPoints)) && Number(defaultPoints) >= 0 ? Number(defaultPoints) : 1;
+        const normalizedPoints = Number.isFinite(parsedPts) && parsedPts >= 0 ? parsedPts : fallbackPts;
+
+        return {
+          isValid: warnings.length === 0,
+          warnings: warnings,
+          options: opts,
+          correctIndex: correctIndex,
+          points: normalizedPoints
+        };
+      }
+
+      /**
+       * Normalizes raw spreadsheet rows into internal question objects.
+       */
+      function normalizeRowsToQuestions(rows) {
+        const defaultPts = Number(els.defaultPointsInput.value);
+        const fallbackPts = Number.isFinite(defaultPts) && defaultPts >= 0 ? defaultPts : 1;
+        const normalized = [];
+
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r];
+          if (!row || typeof row !== 'object') {
+            continue;
+          }
+
+          // Map normalized lowercase header names -> value
+          const map = {};
+          Object.keys(row).forEach(function (key) {
+            const cleanKey = String(key || '').trim().toLowerCase();
+            if (cleanKey) {
+              map[cleanKey] = row[key];
+            }
+          });
+
+          const questionVal = map['question'] ?? map['mcq'] ?? map['prompt'] ?? map['question text'] ?? '';
+          const options = [];
+
+          // Collect explicit option/choice columns in order
+          const optionKeys = Object.keys(row).filter(function (k) {
+            const lk = String(k || '').trim().toLowerCase();
+            return /^(?:option|choice|opt)\s*[a-f0-9]?$/i.test(lk) || /^option\s+[a-f0-9]$/i.test(lk);
+          });
+
+          if (optionKeys.length > 0) {
+            optionKeys.forEach(function (k) {
+              const v = row[k];
+              if (v !== undefined && v !== null && String(v).trim() !== '') {
+                options.push(String(v).trim());
+              }
+            });
+          } else {
+            // Fallback: check "options" column separated by | or ;
+            const combinedOpts = map['options'] ?? map['choices'] ?? '';
+            if (String(combinedOpts).trim()) {
+              String(combinedOpts)
+                .split(/[|;]/)
+                .map(function (s) { return s.trim(); })
+                .filter(Boolean)
+                .forEach(function (o) { options.push(o); });
+            }
+          }
+
+          const answerRaw = map['answer'] ?? map['correct answer'] ?? map['correct'] ?? map['ans'] ?? map['key'] ?? '';
+          const rawPoints = map['points'] ?? map['point'] ?? map['marks'] ?? map['score'] ?? fallbackPts;
+          const numPoints = Number(rawPoints);
+
+          // Skip completely empty rows
+          const hasAnyContent = String(questionVal).trim() !== '' || options.length > 0 || String(answerRaw).trim() !== '';
+          if (!hasAnyContent) {
+            continue;
+          }
+
+          normalized.push({
+            question: String(questionVal || '').trim(),
+            options: options,
+            answerRaw: String(answerRaw == null ? '' : answerRaw).trim(),
+            points: Number.isFinite(numPoints) && numPoints >= 0 ? numPoints : fallbackPts
+          });
+        }
+
+        return normalized;
+      }
+
+      /**
+       * Parses an uploaded File (.xlsx, .xls, .csv) using SheetJS.
+       */
+      function handleFileUpload(file) {
+        els.parseErrorBox.classList.add('hidden');
+        els.parseErrorBox.textContent = '';
+
+        if (!file) {
+          return;
+        }
+        if (typeof XLSX === 'undefined') {
+          els.parseErrorBox.textContent = 'SheetJS library did not load. Check your internet connection or use Quick Debug / Demo mode.';
+          els.parseErrorBox.classList.remove('hidden');
+          showToast('SheetJS parser unavailable', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+              throw new Error('No sheets found inside the workbook.');
+            }
+
+            // Prefer a sheet named MCQ_Questions if present, otherwise first sheet
+            const preferredSheetName = workbook.SheetNames.find(function (name) {
+              return /mcq|question/i.test(name);
+            }) || workbook.SheetNames[0];
+
+            const worksheet = workbook.Sheets[preferredSheetName];
+            const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+            const parsedQuestions = normalizeRowsToQuestions(jsonRows);
+
+            if (parsedQuestions.length === 0) {
+              throw new Error('No MCQ rows found in sheet "' + preferredSheetName + '". Ensure there is a Question column.');
+            }
+
+            state.questions = parsedQuestions;
+            state.sourceFileName = file.name + ' (' + preferredSheetName + ')';
+            renderAll();
+            showToast('Loaded ' + parsedQuestions.length + ' questions from ' + file.name, 'success');
+          } catch (err) {
+            const msg = err && err.message ? err.message : 'Unable to parse spreadsheet.';
+            els.parseErrorBox.textContent = msg;
+            els.parseErrorBox.classList.remove('hidden');
+            showToast(msg, 'error');
+          }
+        };
+        reader.onerror = function () {
+          els.parseErrorBox.textContent = 'Error reading file from disk.';
+          els.parseErrorBox.classList.remove('hidden');
+          showToast('Error reading file', 'error');
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      /**
+       * Generates fault-tolerant Google Apps Script code.
+       * - Never adds page breaks unless usePageBreak is explicitly true (default false).
+       * - Clones Master Template Form when provided and appends MCQs on the same single page.
+       * - Creates a new form when no Master Template Form ID is provided.
+       */
+      function generateAppsScript() {
+        const title = String(els.formTitleInput.value || 'Untitled Quiz').trim() || 'Untitled Quiz';
+        const description = String(els.formDescriptionInput.value || '').trim();
+        const templateId = extractFormId(els.templateFormInput.value);
+        const quizMode = Boolean(els.quizModeCheckbox.checked);
+        const makeRequired = Boolean(els.requiredQuestionsCheckbox.checked);
+        const usePageBreak = Boolean(els.usePageBreakCheckbox.checked);
+        const defaultPts = Number(els.defaultPointsInput.value);
+        const fallbackPts = Number.isFinite(defaultPts) && defaultPts >= 0 ? defaultPts : 1;
+
+        const payload = state.questions.map(function (q) {
+          const check = validateQuestion(q, fallbackPts);
+          return {
+            question: String(q.question || '').trim(),
+            options: check.options,
+            correctIndex: check.correctIndex,
+            points: check.points
+          };
+        });
+
+        const lines = [
+          '/**',
+          ' * Auto-generated by MCQ to Google Forms Studio',
+          ' * Layout mode: ' + (usePageBreak ? 'Section / Page Break Enabled' : 'Single Continuous Page (No Page Break)'),
+          ' */',
+          'function createQuizForm() {',
+          '  var CONFIG = {',
+          '    title: ' + JSON.stringify(title) + ',',
+          '    description: ' + JSON.stringify(description) + ',',
+          '    templateFormId: ' + JSON.stringify(templateId) + ',',
+          '    quizMode: ' + (quizMode ? 'true' : 'false') + ',',
+          '    required: ' + (makeRequired ? 'true' : 'false') + ',',
+          '    usePageBreak: ' + (usePageBreak ? 'true' : 'false') + ',',
+          '    defaultPoints: ' + JSON.stringify(fallbackPts) + ',',
+          '    questions: ' + JSON.stringify(payload, null, 2).split('\n').join('\n    '),
+          '  };',
+          '',
+          '  var form;',
+          '  if (CONFIG.templateFormId) {',
+          '    var templateFile = DriveApp.getFileById(CONFIG.templateFormId);',
+          '    var copiedFile = templateFile.makeCopy(CONFIG.title);',
+          '    form = FormApp.openById(copiedFile.getId());',
+          '    form.setTitle(CONFIG.title);',
+          '    if (CONFIG.description) {',
+          '      form.setDescription(CONFIG.description);',
+          '    }',
+          '  } else {',
+          '    form = FormApp.create(CONFIG.title);',
+          '    if (CONFIG.description) {',
+          '      form.setDescription(CONFIG.description);',
+          '    }',
+          '  }',
+          '',
+          '  if (CONFIG.quizMode) {',
+          '    try {',
+          '      form.setIsQuiz(true);',
+          '    } catch (quizErr) {',
+          '      Logger.log("Warning enabling quiz mode: " + quizErr.message);',
+          '    }',
+          '  }',
+          '',
+          '  // Only add a page break when explicitly requested (default is false / single page)',
+          '  if (CONFIG.usePageBreak) {',
+          '    form.addPageBreakItem().setTitle("Questions");',
+          '  }',
+          '',
+          '  for (var i = 0; i < CONFIG.questions.length; i++) {',
+          '    var q = CONFIG.questions[i];',
+          '    if (!q || !q.question || !Array.isArray(q.options) || q.options.length < 2) {',
+          '      Logger.log("Skipping incomplete question at index " + i);',
+          '      continue;',
+          '    }',
+          '',
+          '    var mcItem = form.addMultipleChoiceItem();',
+          '    mcItem.setTitle(q.question);',
+          '    mcItem.setRequired(CONFIG.required);',
+          '',
+          '    var pts = (typeof q.points === "number" && !isNaN(q.points) && q.points >= 0) ? q.points : CONFIG.defaultPoints;',
+          '',
+          '    if (CONFIG.quizMode) {',
+          '      try {',
+          '        var choices = [];',
+          '        for (var c = 0; c < q.options.length; c++) {',
+          '          var isRight = (typeof q.correctIndex === "number" && q.correctIndex === c);',
+          '          choices.push(mcItem.createChoice(q.options[c], isRight));',
+          '        }',
+          '        mcItem.setChoices(choices);',
+          '        if (typeof mcItem.setPoints === "function") {',
+          '          mcItem.setPoints(pts);',
+          '        }',
+          '      } catch (gradingErr) {',
+          '        Logger.log("Fallback to plain choices for Q" + (i + 1) + ": " + gradingErr.message);',
+          '        mcItem.setChoiceValues(q.options);',
+          '      }',
+          '    } else {',
+          '      mcItem.setChoiceValues(q.options);',
+          '    }',
+          '  }',
+          '',
+          '  var editUrl = form.getEditUrl();',
+          '  var publishedUrl = form.getPublishedUrl();',
+          '  Logger.log("Edit URL: " + editUrl);',
+          '  Logger.log("Published URL: " + publishedUrl);',
+          '  return editUrl;',
+          '}'
+        ];
+
+        return lines.join('\n');
+      }
+
+      /**
+       * Renders KPI summary cards and script output.
+       */
+      function renderSummaryAndScript() {
+        const defaultPts = Number(els.defaultPointsInput.value);
+        const fallbackPts = Number.isFinite(defaultPts) && defaultPts >= 0 ? defaultPts : 1;
+        const templateId = extractFormId(els.templateFormInput.value);
+        const usePageBreak = Boolean(els.usePageBreakCheckbox.checked);
+
+        els.extractedTemplateId.textContent = templateId
+          ? templateId
+          : (els.templateFormInput.value.trim() ? 'Invalid URL/ID' : 'None (Creates new form)');
+
+        let validCount = 0;
+        let warningCount = 0;
+        let totalPoints = 0;
+
+        state.questions.forEach(function (q) {
+          const check = validateQuestion(q, fallbackPts);
+          if (check.isValid) {
+            validCount++;
+          } else {
+            warningCount++;
+          }
+          totalPoints += check.points;
+        });
+
+        els.statTotalQuestions.textContent = String(state.questions.length);
+        els.statValidQuestions.textContent = String(validCount);
+        els.statWarningQuestions.textContent = String(warningCount);
+        els.statTotalPoints.textContent = String(totalPoints);
+        els.statSourceFile.textContent = state.sourceFileName;
+        els.statLayoutMode.textContent = usePageBreak
+          ? 'Page break enabled'
+          : (templateId ? 'Template clone • Single page' : 'New form • Single page');
+
+        els.scriptOutput.textContent = generateAppsScript();
+      }
+
+      /**
+       * Renders the parsed questions table with search & filter support.
+       */
+      function renderQuestionsTable() {
+        const defaultPts = Number(els.defaultPointsInput.value);
+        const fallbackPts = Number.isFinite(defaultPts) && defaultPts >= 0 ? defaultPts : 1;
+        const query = state.search.trim().toLowerCase();
+
+        const rowsWithMeta = state.questions.map(function (q, index) {
+          const check = validateQuestion(q, fallbackPts);
+          return { item: q, index: index, check: check };
+        }).filter(function (entry) {
+          if (state.filter === 'valid' && !entry.check.isValid) {
+            return false;
+          }
+          if (state.filter === 'warning' && entry.check.isValid) {
+            return false;
+          }
+          if (query) {
+            const hay = (
+              entry.item.question + ' ' +
+              entry.check.options.join(' ') + ' ' +
+              entry.item.answerRaw
+            ).toLowerCase();
+            if (hay.indexOf(query) === -1) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        if (rowsWithMeta.length === 0) {
+          els.questionsTableBody.innerHTML =
+            '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">' +
+            (state.questions.length === 0
+              ? 'No questions loaded. Upload an Excel/CSV file, click "Load Built-in Demo", or click "+ Add Row".'
+              : 'No questions match the current filter or search query.') +
+            '</td></tr>';
+          return;
+        }
+
+        els.questionsTableBody.innerHTML = rowsWithMeta.map(function (entry) {
+          const idx = entry.index;
+          const item = entry.item;
+          const check = entry.check;
+          const optionsJoined = item.options.join(' | ');
+          const badgeHtml = check.isValid
+            ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Valid (' +
+              String.fromCharCode(65 + check.correctIndex) + ')</span>'
+            : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200" title="' +
+              escapeHtml(check.warnings.join('; ')) + '">' + escapeHtml(check.warnings[0] || 'Warning') + '</span>';
+
+          return (
+            '<tr class="' + (check.isValid ? '' : 'bg-amber-50/35') + '">' +
+              '<td class="px-3 py-2.5 font-mono text-slate-500">' + (idx + 1) + '</td>' +
+              '<td class="px-3 py-2.5">' +
+                '<input type="text" data-idx="' + idx + '" data-field="question" value="' + escapeAttr(item.question) + '" class="q-edit w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-900" />' +
+              '</td>' +
+              '<td class="px-3 py-2.5">' +
+                '<input type="text" data-idx="' + idx + '" data-field="options" value="' + escapeAttr(optionsJoined) + '" class="q-edit w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none font-mono text-[11px] text-slate-800" />' +
+              '</td>' +
+              '<td class="px-3 py-2.5">' +
+                '<input type="text" data-idx="' + idx + '" data-field="answerRaw" value="' + escapeAttr(item.answerRaw) + '" class="q-edit w-full px-2 py-1.5 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none font-mono text-slate-800" />' +
+              '</td>' +
+              '<td class="px-3 py-2.5">' +
+                '<input type="number" min="0" step="1" data-idx="' + idx + '" data-field="points" value="' + escapeAttr(check.points) + '" class="q-edit w-16 px-2 py-1.5 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none font-mono text-slate-800" />' +
+              '</td>' +
+              '<td class="px-3 py-2.5">' + badgeHtml + '</td>' +
+              '<td class="px-3 py-2.5 text-center">' +
+                '<button type="button" data-del-idx="' + idx + '" aria-label="Delete question ' + (idx + 1) + '" class="del-row-btn p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
+                '</button>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        // Wire inline edits
+        els.questionsTableBody.querySelectorAll('.q-edit').forEach(function (inputEl) {
+          inputEl.addEventListener('change', function () {
+            const i = Number(inputEl.getAttribute('data-idx'));
+            const field = inputEl.getAttribute('data-field');
+            if (!state.questions[i]) {
+              return;
+            }
+            if (field === 'options') {
+              state.questions[i].options = inputEl.value
+                .split(/[|,]/)
+                .map(function (s) { return s.trim(); })
+                .filter(Boolean);
+            } else if (field === 'points') {
+              const n = Number(inputEl.value);
+              state.questions[i].points = Number.isFinite(n) && n >= 0 ? n : fallbackPts;
+            } else {
+              state.questions[i][field] = inputEl.value;
+            }
+            renderSummaryAndScript();
+            renderQuestionsTable();
+          });
+        });
+
+        // Wire row delete buttons
+        els.questionsTableBody.querySelectorAll('.del-row-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const i = Number(btn.getAttribute('data-del-idx'));
+            state.questions.splice(i, 1);
+            renderAll();
+            showToast('Deleted question #' + (i + 1), 'info');
+          });
+        });
+      }
+
+      function renderAll() {
+        renderSummaryAndScript();
+        renderQuestionsTable();
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function escapeAttr(str) {
+        return escapeHtml(str).replace(/'/g, '&#39;');
+      }
+
+      /**
+       * Builds sample rows for template downloads.
+       */
+      function getSampleRows() {
+        return [
+          { Question: 'Which protocol secures HTTP traffic using TLS?', 'Option A': 'FTP', 'Option B': 'HTTPS', 'Option C': 'SMTP', 'Option D': 'SNMP', Answer: 'B', Points: 1 },
+          { Question: 'What is the default port for SSH?', 'Option A': '21', 'Option B': '22', 'Option C': '53', 'Option D': '443', Answer: 'B', Points: 1 },
+          { Question: 'Which tool is primarily used for network packet analysis?', 'Option A': 'Wireshark', 'Option B': 'Notepad', 'Option C': 'Paint', 'Option D': 'Calculator', Answer: 'A', Points: 2 }
+        ];
+      }
+
+      function downloadSampleXlsx() {
+        if (typeof XLSX === 'undefined') {
+          showToast('SheetJS not loaded; try Sample .CSV instead', 'error');
+          return;
+        }
+        try {
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.json_to_sheet(getSampleRows());
+          XLSX.utils.book_append_sheet(wb, ws, 'MCQ_Questions');
+          XLSX.writeFile(wb, 'sample-mcq-questions.xlsx');
+          showToast('Downloaded sample-mcq-questions.xlsx', 'success');
+        } catch (err) {
+          showToast('Could not generate .xlsx file', 'error');
+        }
+      }
+
+      function downloadSampleCsv() {
+        const rows = getSampleRows();
+        const headers = Object.keys(rows[0]);
+        const csvLines = [
+          headers.join(','),
+          ...rows.map(function (r) {
+            return headers.map(function (h) {
+              const cell = String(r[h] == null ? '' : r[h]).replace(/"/g, '""');
+              return '"' + cell + '"';
+            }).join(',');
+          })
+        ];
+        const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        triggerBlobDownload(blob, 'sample-mcq-questions.csv');
+        showToast('Downloaded sample-mcq-questions.csv', 'success');
+      }
+
+      function triggerBlobDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }
+
+      function copyGeneratedScript() {
+        const text = els.scriptOutput.textContent || '';
+        if (!text) {
+          return;
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          navigator.clipboard.writeText(text).then(function () {
+            onCopied();
+          }).catch(function () {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          onCopied();
+        } catch (_err) {
+          showToast('Copy failed — select and copy manually', 'error');
+        }
+        document.body.removeChild(ta);
+      }
+
+      function onCopied() {
+        els.copyScriptLabel.textContent = 'Copied!';
+        showToast('Google Apps Script copied to clipboard', 'success');
+        setTimeout(function () {
+          els.copyScriptLabel.textContent = 'Copy Script';
+        }, 2000);
+      }
+
+      function downloadGeneratedScript() {
+        const text = els.scriptOutput.textContent || '';
+        const blob = new Blob([text], { type: 'application/javascript;charset=utf-8' });
+        triggerBlobDownload(blob, 'CreateQuizForm.gs');
+        showToast('Downloaded CreateQuizForm.gs', 'success');
+      }
+
+      /**
+       * Runs self-test assertions in the Quick Debug modal.
+       */
+      function runSelfTests() {
+        const checks = [];
+
+        // 1. Default page break checkbox is false
+        checks.push({
+          pass: els.usePageBreakCheckbox.checked === false,
+          label: 'Default usePageBreak is false (single continuous page)'
+        });
+
+        // 2. Generated script omits addPageBreakItem when unchecked
+        const scriptText = generateAppsScript();
+        checks.push({
+          pass: scriptText.indexOf('usePageBreak: false') !== -1,
+          label: 'Generated script sets CONFIG.usePageBreak = false by default'
+        });
+
+        // 3. URL & raw Form ID extraction
+        const extractedFromUrl = extractFormId('https://docs.google.com/forms/d/1AbCdEfGhIjKlMnOpQrStUvWxYz123456/edit');
+        const extractedFromRaw = extractFormId('  1AbCdEfGhIjKlMnOpQrStUvWxYz123456  ');
+        checks.push({
+          pass: extractedFromUrl === '1AbCdEfGhIjKlMnOpQrStUvWxYz123456' && extractedFromRaw === '1AbCdEfGhIjKlMnOpQrStUvWxYz123456',
+          label: 'Cleanly extracts Google Form ID from edit URL and raw ID'
+        });
+
+        // 4. Answer resolver handles letter and exact text
+        const idxLetter = resolveCorrectOptionIndex('c', ['Alpha', 'Beta', 'Gamma', 'Delta']);
+        const idxText = resolveCorrectOptionIndex('delta', ['Alpha', 'Beta', 'Gamma', 'Delta']);
+        checks.push({
+          pass: idxLetter === 2 && idxText === 3,
+          label: 'Resolves answer keys by letter (C -> index 2) and option text (delta -> index 3)'
+        });
+
+        // 5. Quote / newline escaping via JSON.stringify
+        const trickyTitle = 'Test "Quotes" & \\ Backslash\nLine2';
+        const hasEscapedTitle = scriptText.indexOf('title:') !== -1;
+        checks.push({
+          pass: typeof JSON.stringify(trickyTitle) === 'string' && hasEscapedTitle,
+          label: 'Safely serializes titles, descriptions, and options with JSON.stringify'
+        });
+
+        const passedCount = checks.filter(function (c) { return c.pass; }).length;
+        const allPassed = passedCount === checks.length;
+
+        els.diagnosticsSummaryBadge.textContent = passedCount + ' / ' + checks.length + ' Passed';
+        els.diagnosticsSummaryBadge.className = 'px-2.5 py-1 rounded-full font-semibold ' + (
+          allPassed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+        );
+
+        els.diagnosticsResults.innerHTML = checks.map(function (c) {
+          return '<div class="' + (c.pass ? 'text-emerald-700' : 'text-rose-700') + '">' +
+            (c.pass ? '[PASS] ' : '[FAIL] ') + escapeHtml(c.label) +
+            '</div>';
+        }).join('');
+      }
+
+      function bindEvents() {
+        els.toastCloseBtn.addEventListener('click', function () {
+          els.toastBanner.classList.add('hidden');
+        });
+
+        // Dropzone click & drag-and-drop
+        els.dropZone.addEventListener('click', function () {
+          els.fileInput.click();
+        });
+        els.dropZone.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            els.fileInput.click();
+          }
+        });
+        els.dropZone.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          els.dropZone.classList.add('border-brand-500', 'bg-brand-50/50');
+        });
+        els.dropZone.addEventListener('dragleave', function () {
+          els.dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
+        });
+        els.dropZone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          els.dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
+          const files = e.dataTransfer && e.dataTransfer.files;
+          if (files && files.length > 0) {
+            handleFileUpload(files[0]);
+          }
+        });
+        els.fileInput.addEventListener('change', function (e) {
+          const files = e.target && e.target.files;
+          if (files && files.length > 0) {
+            handleFileUpload(files[0]);
+          }
+          e.target.value = '';
+        });
+
+        // Demo & samples
+        els.loadDemoDataBtn.addEventListener('click', function () {
+          state.questions = DEMO_QUESTIONS.map(function (q) {
+            return {
+              question: q.question,
+              options: q.options.slice(),
+              answerRaw: q.answerRaw,
+              points: q.points
+            };
+          });
+          state.sourceFileName = 'Built-in Demo';
+          els.parseErrorBox.classList.add('hidden');
+          renderAll();
+          showToast('Loaded built-in sample MCQs', 'success');
+        });
+
+        els.downloadSampleXlsxBtn.addEventListener('click', downloadSampleXlsx);
+        els.downloadSampleCsvBtn.addEventListener('click', downloadSampleCsv);
+
+        // Form settings listeners
+        [
+          els.formTitleInput,
+          els.formDescriptionInput,
+          els.defaultPointsInput,
+          els.quizModeCheckbox,
+          els.requiredQuestionsCheckbox,
+          els.usePageBreakCheckbox
+        ].forEach(function (ctrl) {
+          ctrl.addEventListener('input', renderAll);
+          ctrl.addEventListener('change', renderAll);
+        });
+
+        els.templateFormInput.addEventListener('input', function () {
+          persistTemplateInput(els.templateFormInput.value);
+          renderSummaryAndScript();
+        });
+
+        els.clearTemplateBtn.addEventListener('click', function () {
+          els.templateFormInput.value = '';
+          persistTemplateInput('');
+          renderSummaryAndScript();
+          showToast('Cleared Master Template Form ID', 'info');
+        });
+
+        // Script actions
+        els.copyScriptBtn.addEventListener('click', copyGeneratedScript);
+        els.downloadScriptBtn.addEventListener('click', downloadGeneratedScript);
+
+        // Filter pills
+        document.querySelectorAll('.filter-pill').forEach(function (pill) {
+          pill.addEventListener('click', function () {
+            state.filter = pill.getAttribute('data-filter') || 'all';
+            document.querySelectorAll('.filter-pill').forEach(function (p) {
+              const active = p === pill;
+              p.className = 'filter-pill px-3 py-1.5 rounded-lg transition ' + (
+                active ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+              );
+            });
+            renderQuestionsTable();
+          });
+        });
+
+        // Search & row controls
+        els.questionSearchInput.addEventListener('input', function () {
+          state.search = els.questionSearchInput.value || '';
+          renderQuestionsTable();
+        });
+
+        els.addQuestionRowBtn.addEventListener('click', function () {
+          const pts = Number(els.defaultPointsInput.value);
+          state.questions.push({
+            question: 'New multiple-choice question?',
+            options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
+            answerRaw: 'A',
+            points: Number.isFinite(pts) && pts >= 0 ? pts : 1
+          });
+          renderAll();
+          showToast('Added a new question row', 'info');
+        });
+
+        els.clearQuestionsBtn.addEventListener('click', function () {
+          state.questions = [];
+          state.sourceFileName = 'Cleared';
+          renderAll();
+          showToast('Cleared all questions', 'info');
+        });
+
+        // Debug modal
+        els.openDebugModalBtn.addEventListener('click', function () {
+          els.debugModal.classList.remove('hidden');
+          els.debugModal.classList.add('flex');
+          runSelfTests();
+        });
+        els.closeDebugModalBtn.addEventListener('click', function () {
+          els.debugModal.classList.add('hidden');
+          els.debugModal.classList.remove('flex');
+        });
+        els.debugModal.addEventListener('click', function (e) {
+          if (e.target === els.debugModal) {
+            els.debugModal.classList.add('hidden');
+            els.debugModal.classList.remove('flex');
+          }
+        });
+        els.runDiagnosticsBtn.addEventListener('click', runSelfTests);
+      }
+
+      // Initialize application
+      loadSavedTemplate();
+      els.usePageBreakCheckbox.checked = false;
+      state.questions = DEMO_QUESTIONS.map(function (q) {
+        return {
+          question: q.question,
+          options: q.options.slice(),
+          answerRaw: q.answerRaw,
+          points: q.points
+        };
+      });
+      bindEvents();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
